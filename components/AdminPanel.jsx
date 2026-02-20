@@ -19,6 +19,7 @@ import {
   getSession,
   toggleBlockUser,
   deleteUserByAdmin,
+  updateUserRoleByAdmin,
 } from "@/lib/supabase"
 import { getToday } from "@/lib/dates"
 
@@ -32,8 +33,8 @@ export default function AdminPanel({ user }) {
   const [todayReservations, setTodayReservations] = useState([])
   const [loading, setLoading] = useState(true)
 
-  const loadData = useCallback(async () => {
-    setLoading(true)
+  const loadData = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true)
     const today = getToday()
     const [statsRes, profilesRes, spotsRes, assignmentsRes, todayRes] = await Promise.all([
       getStats(),
@@ -47,7 +48,7 @@ export default function AdminPanel({ user }) {
     setSpots(spotsRes.data || [])
     setAssignments(assignmentsRes.data || [])
     setTodayReservations(todayRes.data || [])
-    setLoading(false)
+    if (!silent) setLoading(false)
   }, [])
 
   useEffect(() => {
@@ -230,14 +231,14 @@ function SpotsTab({ spots, assignments, profiles, onRefresh }) {
     setAdding(true)
     await createSpot(newLabel.trim(), newZone, spots.length + 1)
     setNewLabel("")
-    await onRefresh()
+    await onRefresh(true)
     setAdding(false)
   }
 
   async function handleDelete(id, label) {
     if (!confirm(`Parkplatz "${label}" wirklich endgültig löschen? Alle zugehörigen Zuweisungen, Verfügbarkeiten und Reservierungen werden ebenfalls gelöscht.`)) return
     await deleteSpot(id)
-    await onRefresh()
+    await onRefresh(true)
   }
 
   function startEdit(spot) {
@@ -257,7 +258,7 @@ function SpotsTab({ spots, assignments, profiles, onRefresh }) {
     setSaving(true)
     await updateSpot(id, { label: editLabel.trim(), zone: editZone })
     setEditingId(null)
-    await onRefresh()
+    await onRefresh(true)
     setSaving(false)
   }
 
@@ -279,7 +280,7 @@ function SpotsTab({ spots, assignments, profiles, onRefresh }) {
     if (userId) {
       await assignSpot(spotId, userId)
     }
-    await onRefresh()
+    await onRefresh(true)
   }
 
   return (
@@ -491,7 +492,7 @@ function UsersTab({ profiles, onRefresh }) {
       await createUserViaAdmin(newUser.email, newUser.fullName, newUser.role, session.access_token)
       setNewUser({ email: "", fullName: "", role: "flexible" })
       alert("Mitarbeiter erfolgreich angelegt! Er kann sich mit dem Default-Passwort einloggen.")
-      await onRefresh()
+      await onRefresh(true)
     } catch (err) {
       alert(err.message)
     }
@@ -499,8 +500,15 @@ function UsersTab({ profiles, onRefresh }) {
   }
 
   async function handleRoleChange(userId, newRole) {
-    await updateProfile(userId, { role: newRole })
-    await onRefresh()
+    setActionLoading(userId)
+    try {
+      const { data: { session } } = await getSession()
+      await updateUserRoleByAdmin(userId, newRole, session.access_token)
+      await onRefresh(true) // Silent refresh
+    } catch (err) {
+      alert(err.message)
+    }
+    setActionLoading(null)
   }
 
   async function handleToggleBlock(userId, currentlyBlocked, name) {
@@ -511,7 +519,7 @@ function UsersTab({ profiles, onRefresh }) {
     if (error) {
       alert("Fehler: " + error.message)
     }
-    await onRefresh()
+    await onRefresh(true)
     setActionLoading(null)
   }
 
@@ -521,7 +529,7 @@ function UsersTab({ profiles, onRefresh }) {
     try {
       const { data: { session } } = await getSession()
       await deleteUserByAdmin(userId, session.access_token)
-      await onRefresh()
+      await onRefresh(true)
     } catch (err) {
       alert(err.message)
     }
@@ -619,8 +627,8 @@ function UsersTab({ profiles, onRefresh }) {
             >
               <div className="flex items-center gap-5 mb-6 sm:mb-0">
                 <div className={`w-14 h-14 rounded-[1.25rem] flex items-center justify-center ${isBlocked
-                    ? "bg-red-100 border border-red-200"
-                    : "bg-orendt-accent/10 border border-orendt-accent/20"
+                  ? "bg-red-100 border border-red-200"
+                  : "bg-orendt-accent/10 border border-orendt-accent/20"
                   }`}>
                   <span className={`font-display text-xl font-bold uppercase ${isBlocked ? "text-red-400" : "text-orendt-black"
                     }`}>
@@ -649,7 +657,8 @@ function UsersTab({ profiles, onRefresh }) {
                   <select
                     value={profile.role}
                     onChange={(e) => handleRoleChange(profile.id, e.target.value)}
-                    className="w-full sm:w-auto px-6 py-3.5 bg-orendt-gray-50 border border-orendt-gray-100 rounded-2xl text-[11px] font-display font-bold uppercase tracking-widest outline-none focus:border-orendt-black transition-all appearance-none cursor-pointer pr-10"
+                    disabled={isLoading}
+                    className="w-full sm:w-auto px-6 py-3.5 bg-orendt-gray-50 border border-orendt-gray-100 rounded-2xl text-[11px] font-display font-bold uppercase tracking-widest outline-none focus:border-orendt-black transition-all appearance-none cursor-pointer pr-10 disabled:opacity-50"
                   >
                     {ROLE_OPTIONS.map((opt) => (
                       <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -667,8 +676,8 @@ function UsersTab({ profiles, onRefresh }) {
                   onClick={() => handleToggleBlock(profile.id, isBlocked, profile.full_name)}
                   disabled={isLoading || profile.role === "admin"}
                   className={`p-3 rounded-xl transition-all disabled:opacity-20 ${isBlocked
-                      ? "text-emerald-600 hover:bg-emerald-50 border border-emerald-200"
-                      : "text-amber-600 hover:bg-amber-50 border border-orendt-gray-100 hover:border-amber-200"
+                    ? "text-emerald-600 hover:bg-emerald-50 border border-emerald-200"
+                    : "text-amber-600 hover:bg-amber-50 border border-orendt-gray-100 hover:border-amber-200"
                     }`}
                   title={isBlocked ? "Entsperren" : "Sperren"}
                 >

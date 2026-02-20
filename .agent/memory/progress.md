@@ -3,6 +3,8 @@
 ## Completed
 - [x] Tailwind Setup (Colors, Fonts, Animations)
 - [x] Global Styles Implementation
+- [x] End-to-End Test: Account löschen → Redirect auf Login, User aus DB entfernt
+- [x] Registration Flow: Auto-login nach Registrierung (falls E-Mail-Bestätigung aus) + Redirect auf Dashboard
 - [x] Component Refinement:
     - [x] Header (Logo, Nav)
     - [x] Dashboard (Animations, Layout)

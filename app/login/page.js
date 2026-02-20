@@ -30,10 +30,16 @@ export default function LoginPage() {
 
     try {
       if (isSignUp) {
-        const { error } = await signUp(email, password, fullName)
+        const { data, error } = await signUp(email, password, fullName)
         if (error) throw error
-        setError("")
-        alert("Registrierung erfolgreich! Bitte bestätige deine E-Mail.")
+
+        if (data?.session) {
+          // If auto-confirmation is enabled, we get a session immediately
+          router.push("/dashboard")
+        } else {
+          // If email confirmation is required, data.session will be null
+          setError("Registrierung erfolgreich! Bitte bestätige deine E-Mail, bevor du dich einloggst.")
+        }
       } else {
         const { error } = await signIn(email, password)
         if (error) throw error

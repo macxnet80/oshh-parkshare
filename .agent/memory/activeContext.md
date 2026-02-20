@@ -8,6 +8,7 @@ User Profile/Settings Page für alle Rollen implementiert.
 - [x] API-Route `/api/user/delete-account` (Service Role Key, JWT-Verification)
 - [x] `components/UserSettings.jsx`: Name/E-Mail/Passwort ändern + Account löschen (Danger Zone mit Bestätigungs-Modal)
 - [x] `app/profile/page.js`: Neue Profilseite mit Auth-Guard
+- [x] `app/login/page.js`: Auto-login nach Registrierung implementiert (Redirect auf Dashboard)
 - [x] `components/Header.jsx`: "Profil" NavTab für alle User-Rollen
 
 ## Next Steps
