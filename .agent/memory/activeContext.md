@@ -1,17 +1,13 @@
 # Active Context: Parkshare
 
 ## Current Focus
-User Profile/Settings Page für alle Rollen implementiert.
+Datetime-Handling auf lokale Zeitzone umgestellt, damit der heutige Tag korrekt als buchbar erkannt wird.
 
 ## Recent Changes
-- [x] `lib/supabase.js`: `updateEmail()` Funktion hinzugefügt
-- [x] API-Route `/api/user/delete-account` (Service Role Key, JWT-Verification)
-- [x] `components/UserSettings.jsx`: Name/E-Mail/Passwort ändern + Account löschen (Danger Zone mit Bestätigungs-Modal)
-- [x] `app/profile/page.js`: Neue Profilseite mit Auth-Guard
-- [x] `app/login/page.js`: Auto-login nach Registrierung implementiert (Redirect auf Dashboard)
-- [x] `components/Header.jsx`: "Profil" NavTab für alle User-Rollen
+- [x] `lib/dates.js`: `formatDateISO()` von UTC (`toISOString`) auf lokale Zeitzone umgestellt
+- [x] `lib/supabase.js`: Alle `toISOString().split('T')[0]` durch `getToday()` ersetzt
+- [x] `components/ParkingOverview.jsx`: `changeDate()` nutzt jetzt `formatDateISO()`
 
 ## Next Steps
-- [ ] End-to-End Test: Name ändern → Header zeigt neuen Namen
-- [ ] End-to-End Test: Passwort ändern → Neu einloggen mit neuem PW
-- [ ] End-to-End Test: Account löschen → Redirect auf Login, User aus DB entfernt
+- [ ] Testen: OwnerCalendar → heutiger Tag klickbar und freigebebar
+- [ ] Testen: FlexibleBooking → freigegebener Platz heute buchbar

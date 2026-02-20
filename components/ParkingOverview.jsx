@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { getDailyOverview } from "@/lib/supabase"
-import { formatDateLong, getToday, isToday } from "@/lib/dates"
+import { formatDateLong, formatDateISO, getToday, isToday } from "@/lib/dates"
 
 const STATUS_CONFIG = {
   available: {
@@ -74,7 +74,7 @@ export default function ParkingOverview({ user, onBook }) {
   function changeDate(delta) {
     const d = new Date(date)
     d.setDate(d.getDate() + delta)
-    setDate(d.toISOString().split("T")[0])
+    setDate(formatDateISO(d))
   }
 
   // Group spots by zone

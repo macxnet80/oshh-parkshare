@@ -4,3 +4,6 @@ node_modules/
 .env*.local
 .vercel
 *.tsbuildinfo
+.agent
+docs
+memory
